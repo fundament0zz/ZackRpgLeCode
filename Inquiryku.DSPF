@@ -1,0 +1,40 @@
+     A*%%TS  SD  20141209  161512  TIZAKI      REL-V5R3M0  5722-WDS
+     A*%%EC
+     A                                      DSPSIZ(24 80 *DS3)
+     A                                      CA03(03 'Exit')
+     A                                      CF15(15 'Print')
+     A          R CETAKHIST
+     A*%%TS  SD  20141209  160401  TIZAKI      REL-V5R3M0  5722-WDS
+     A                                  1  2USER
+     A                                  1 15SYSNAME
+     A                                  1 28' Cetak Transaksi '
+     A                                      DSPATR(RI)
+     A                                      COLOR(WHT)
+     A                                  1 49TIME
+     A                                  1 62DATE
+     A                                      EDTCDE(Y)
+     A                                  3  3'Masukkan Nomor Rekening : '
+     A                                  4  3'Masukkan Tanggal Awal   : '
+     A                                  5  3'Masukkan Tanggal Akhir  : '
+     A            DHACCT    R        I  3 30REFFLD(@DHIS/DHACCT VISIONA/DHIS)
+     A                                      CHECK(ME)
+     A                                 22  4'F3 = Keluar'
+     A                                      DSPATR(RI)
+     A                                      DSPATR(BL)
+     A                                      COLOR(RED)
+     A                                  3 45'11 Digit, Contoh: 101201XXXXX'
+     A                                      DSPATR(UL)
+     A                                  4 45'DDMMYYYY'
+     A                                      DSPATR(UL)
+     A                                  5 45'DDMMYYYY'
+     A                                      DSPATR(UL)
+     A            TGLAWAL        8A  I  4 30
+     A            TGLAKHIR       8A  I  5 30
+     A                                 22 19'F15= Cetak'
+     A                                      DSPATR(RI)
+     A                                      DSPATR(HI)
+     A                                      DSPATR(BL)
+     A            MESSAGE       40A  O 21  4
+     A N54                                  DSPATR(ND)
+     A  54                                  DSPATR(HI)
+     
