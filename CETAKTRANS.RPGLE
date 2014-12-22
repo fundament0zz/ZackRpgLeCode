@@ -2,6 +2,9 @@ HDECEDIT(*JOBRUN)
 FDHISZ0    IF   E           k DISK
 FDBALZ0    IF   E           k DISK
 FDappZ0    IF   E           k DISK
+FDTRCDZ0   IF   E           k DISK
+FDTRCDZ1   IF   E           k DISK
+FDDESCZ0   IF   E           k DISK
 FGLDCRTZ0  IF   E           k DISK
 FCXREFZ0   IF   E           k DISK
 FCADDRZ0   IF   E           k DISK
@@ -29,6 +32,10 @@ C                   DoW       Not *In03=*On
 C                   ExFmt     CetakHist
 C                   If        *In15 = *on
  /Free
+  DB = 0;
+  CR = 0;
+  TotalDB = 0;
+  TotalCR = 0;
   IsoAwal = %char(%date(tglawal:*EUR0):*ISO0);
   IsoAkhir = %char(%date(tglakhir:*EUR0):*ISO0);
   IntAwal = %Int(IsoAwal);
@@ -110,6 +117,8 @@ C                   Write     nfoRek
    Write Last;
    ExSr alwal;
    ExSr Mutation;
+   Write Totals;
+   Write Balance;
   /End-Free
 C                   EndIf
 C                   EndIf
@@ -181,6 +190,79 @@ C                   Eval      *InLr = *On
   EndIF;
   EndSr;
   // * --- Akhir Dari Subrutin Untuk Menghasilkan Saldo Awal --- * //
+  
+  
+  // * --- Awal Dari Subruti Untuk Menghasilkan Mutasi Trans --- * //
+ BegSr Mutation;
+ // Nilai Mutasi diambil dari saldoawal
+ Mutasi = SaldoAwal;
+ // Untuk Redaksi Offline Indicator
+  Redaksi = 'Saldo Pindahan ........:';
+  // Posisi Di Record Dengan Nomor Rekening Yang Dicari
+  SetLL DHACCT Dhisz0;
+  // Baca File DhisZ0
+  Read Dhisz0;
+  // Selama Belum End Of File Dhisz0
+  DoW Not %EOF(Dhisz0);
+   // Jika Masih didalam range tanggal yang dicari
+   If DhPsdt >= IntAwal and DhPsdt <= IntAkhir;
+    // Tanggal dan Kodtran Diisi Dari Nilai Di Dhisz0
+   Tanggal = %Char(%Date(%char(DHPSDT):*ISO0):*DMY);
+   Kodtran = DHTXCD;
+   // Kalau Transaksinya adalah debit
+   If DhDbCr = 'D';
+    Debit = Dhamt;
+    TotalDB += Debit;
+    Kredit = *Zeros;
+    Mutasi -= DhAmt;
+    DB += 1;
+   EndIF;
+   // Kalau Transaksinya adalah kredit
+   If DhDbCr = 'C';
+    Kredit = Dhamt;
+    TotalCr += Kredit;
+    Debit = *Zeros;
+    Mutasi += DhAmt;
+    CR += 1;
+   EndIF;
+   // Kalau Sequence Transaksi Untuk Deskripsinya adalah 0
+   If DHDES# = 0;
+    // Kodtran Bukan Reversal
+    If %int(%SubSt(%Char(DHTXCD):1:1)) < 4;
+     Chain (DHTAPC:DHTXCD:DHDBCR) DTRCDZ0;
+      Deskripsi = %trim(DFTRDS);
+    Else;
+     // Kodtran Reversal
+     Chain (DHTAPC:DHTXCD:DHDBCR) DTRCDZ1;
+      Deskripsi = %trim(DFTRDS);
+    EndIF;
+   Else;
+    // DHDES# tidak sama dengan 0
+    Chain (DHACCT:DHDES#) DDESCZ0;
+     Deskripsi = %trim(DDDESC);
+   EndIF;
+  // Tulis Mutasi
+  Write Mutate;
+  // Jika End Of Page Dari Printer File
+  If *In90 = *On;
+   SaldoAwal = Mutasi;
+   Write Periode;
+   Write NfoRek;
+   Write Name;
+   Write CurAddr;
+   Write PageNb;
+   Write Last;
+   Write SalWal;
+   *In90 = *Off;
+  EndIF;
+  // Mencari Rekening Selanjutnya Di Range Tanggal Tersebut
+  EndIF;
+   ReadE Dhacct Dhisz0;
+  EndDo;
+  Efektif = Mutasi;
+  EndSr;
+  // * --- Akhir 7ari Subruti Untuk Menghasilkan Mutasi Trans --- * //  
+
  /End-Free
  
  **CTDATA bulans
